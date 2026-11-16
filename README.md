@@ -1,6 +1,19 @@
 # t0api — Unified Lua/Luau Obfuscation Gateway
 
-## Bản vá gần nhất (đã sửa 2 bug báo cáo từ bản deploy thật)
+## Bản vá mới nhất
+
+3. **`25ms-obf` lỗi `prometheus:13: attempt to concatenate a nil value`**: dòng 13 của
+   `prometheus.lua` gốc tự dò đường dẫn file của chính nó bằng
+   `debug.getinfo(2,"S").source` để tự thêm vào `package.path` (phục vụ `require()` qua
+   filesystem thật). Khi nạp file này bằng `load(sourceString, "@prometheus")` (không qua
+   filesystem), `source` không có dấu `/` nên hàm dò đường trả về `nil`, rồi
+   `nil .. "?.lua;" .. package.path` nổ lỗi concatenate — xảy ra **trước khi** chạm tới API thật
+   của Prometheus. Vì mọi module con đã được nạp sẵn qua `package.preload` (không cần
+   `package.path` hoạt động), fix chỉ cần đổi "tên file ảo" truyền cho `load()` thành một chuỗi
+   có dấu `/` (`@/virtual/prometheus.lua`) để hàm dò đường không trả `nil` nữa — không đụng vào
+   logic gốc của Prometheus. Đã sửa trong `lib/engines/25msRunner.js`.
+
+## Bản vá trước đó (đã sửa 2 bug báo cáo từ bản deploy thật)
 
 1. **`ENOENT ... node_modules/wasmoon/dist/glue.wasm`** trên `25ms-obf` / `hercules` /
    `moonsecv2`: Vercel tự trace dependency bằng static analysis nên bỏ sót file nhị phân
