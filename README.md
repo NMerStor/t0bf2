@@ -1,5 +1,23 @@
 # t0api — Unified Lua/Luau Obfuscation Gateway
 
+## Bản vá gần nhất (đã sửa 2 bug báo cáo từ bản deploy thật)
+
+1. **`ENOENT ... node_modules/wasmoon/dist/glue.wasm`** trên `25ms-obf` / `hercules` /
+   `moonsecv2`: Vercel tự trace dependency bằng static analysis nên bỏ sót file nhị phân
+   `glue.wasm` của `wasmoon` (không require() trực tiếp được bằng path tĩnh). Đã thêm
+   `includeFiles: "node_modules/wasmoon/dist/**"` cho 3 function này trong `vercel.json` để ép
+   Vercel đóng gói kèm. **Cần deploy lại (redeploy) sau khi cập nhật code này** — sửa file không
+   tự áp dụng cho deployment cũ.
+2. **Clyde `print("hi")` ra y nguyên, không obfuscate**: đây thực ra là hành vi *gốc* của
+   `server.ts` Clyde (mặc định `encodeStrings`/`scramble` đều tắt, và script không có local nào
+   để rename) — API không hề bị đơn giản hoá so với bản gốc. Vấn đề là trang test (`/`) chưa có ô
+   bật các tuỳ chọn này nên trông như không chạy gì. Đã thêm đủ checkbox
+   (`encodeStrings`, `scramble`, `oneLine`, tắt rename, tắt preserve) + dropdown `vmType`/`vmLevel`
+   cho card Clyde trên trang test, 2 ô `encodeStrings`/`scramble` được tick sẵn để bấm
+   Obfuscate là thấy kết quả thật ngay. Gọi API trực tiếp (không qua web) vẫn giữ đúng default
+   gốc (tất cả tắt) nếu bạn không truyền `options`.
+
+
 Một site Vercel duy nhất, mỗi obfuscator là 1 nhóm endpoint riêng dưới `/api/<engine>/...`
 (không gộp logic các engine vào nhau), kèm web UI test nhanh (`/`) và trang docs (`/docs`).
 

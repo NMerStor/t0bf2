@@ -3,9 +3,18 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/luaegis/vm.js": { "maxDuration": 60 },
-    "api/25ms-obf/obfuscate.js": { "maxDuration": 60 },
-    "api/hercules/obfuscate.js": { "maxDuration": 60 },
-    "api/moonsecv2/obfuscate.js": { "maxDuration": 60 },
+    "api/25ms-obf/obfuscate.js": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/wasmoon/dist/**"
+    },
+    "api/hercules/obfuscate.js": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/wasmoon/dist/**"
+    },
+    "api/moonsecv2/obfuscate.js": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/wasmoon/dist/**"
+    },
     "api/wearedev/obfuscate.js": { "maxDuration": 60 }
   },
   "rewrites": [

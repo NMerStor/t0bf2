@@ -24,9 +24,21 @@ const ENGINES = [
     id: "clyde",
     name: "Clyde Protection",
     tag: null,
-    desc: "Obfuscate (rename/encode strings/scramble/VM) + validate cú pháp Luau.",
+    desc: "Obfuscate (rename/encode strings/scramble/VM) + validate cú pháp Luau. Mặc định của chính Clyde là TẮT hết các cờ encode/scramble (giống server.ts gốc) — 2 ô dưới đây được tick sẵn trên trang test này để bạn thấy obfuscate thật ngay, bỏ tick nếu muốn xem hành vi mặc định gốc.",
     endpoint: "/api/clyde/obfuscate",
     field: "code",
+    wrapOptionsKey: "options",
+    checkboxFields: [
+      { key: "encodeStrings", label: "Encode strings", default: true },
+      { key: "scramble", label: "Scramble control flow", default: true },
+      { key: "oneLine", label: "One-line output", default: false },
+      { key: "noRename", label: "Tắt rename locals", default: false },
+      { key: "noPreserve", label: "Tắt preserve globals", default: false },
+    ],
+    extraFields: [
+      { key: "vmType", label: "VM type", options: ["none", "stack", "register"] },
+      { key: "vmLevel", label: "VM level", options: ["debug", "normal", "max"] },
+    ],
   },
   {
     id: "veil",
@@ -114,6 +126,16 @@ function renderEngineCard(engine) {
     )
     .join("");
 
+  const checkboxHtml = (engine.checkboxFields || [])
+    .map(
+      (f) => `
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;flex:none;">
+        <input type="checkbox" data-role="checkbox" data-key="${f.key}" ${f.default ? "checked" : ""} />
+        ${f.label}
+      </label>`
+    )
+    .join("");
+
   return `
     <div class="card" data-engine="${engine.id}">
       <h2>${engine.name}${tagHtml}</h2>
@@ -125,6 +147,7 @@ function renderEngineCard(engine) {
         ${presetHtml}
         ${extraHtml}
       </div>
+      ${checkboxHtml ? `<div class="row">${checkboxHtml}</div>` : ""}
       <div class="row">
         <button data-role="run">Obfuscate</button>
       </div>
@@ -151,9 +174,23 @@ async function runEngine(engine, card) {
   const body = { [engine.field]: input };
   const presetSel = card.querySelector('[data-role="preset"]');
   if (presetSel) body.preset = presetSel.value;
+
+  // Extra selects (e.g. vmType/vmLevel) and checkboxes either go flat on the
+  // body, or nested under a key like "options" (Clyde's API shape), per
+  // engine.wrapOptionsKey.
+  const extras = {};
   card.querySelectorAll('[data-role="extra"]').forEach((sel) => {
-    body[sel.dataset.key] = sel.value;
+    extras[sel.dataset.key] = sel.value;
   });
+  card.querySelectorAll('[data-role="checkbox"]').forEach((cb) => {
+    extras[cb.dataset.key] = cb.checked;
+  });
+
+  if (engine.wrapOptionsKey) {
+    body[engine.wrapOptionsKey] = extras;
+  } else {
+    Object.assign(body, extras);
+  }
 
   btn.disabled = true;
   btn.textContent = "Đang xử lý...";
