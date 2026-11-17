@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "functions": {
-    "api/luaegis/vm.js": { "maxDuration": 60 },
+    "api/luaegis/[...path].js": { "maxDuration": 60 },
     "api/25ms-obf/obfuscate.js": {
       "maxDuration": 60,
       "includeFiles": "node_modules/wasmoon/dist/**"

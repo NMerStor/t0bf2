@@ -85,8 +85,43 @@ cần crawl `/docs` trên web nữa.
    gốc (tất cả tắt) nếu bạn không truyền `options`.
 
 
-Một site Vercel duy nhất, mỗi obfuscator là 1 nhóm endpoint riêng dưới `/api/<engine>/...`
-(không gộp logic các engine vào nhau), kèm web UI test nhanh (`/`) và trang docs (`/docs`).
+Một site Vercel duy nhất, giữ nguyên các endpoint public dưới `/api/<engine>/...`, kèm web UI
+test nhanh (`/`) và trang docs (`/docs`).
+
+## Vercel Serverless Functions
+
+Vercel triển khai tối đa **12 functions** từ thư mục `api/`. Các route public của luaegis và
+Clyde được phân phối bởi catch-all router theo path; các engine còn lại giữ entrypoint riêng để
+bảo toàn timeout, memory và file inclusion theo cấu hình hiện tại. Phần xử lý API nằm trong
+`backend/`, ngoài thư mục function entrypoints.
+
+| API path | Function entrypoint | Handler |
+|---|---|---|
+| `GET /api/health` | `api/health.js` | `backend/health.js` |
+| `/api/luaegis/obfuscate` | `api/luaegis/[...path].js` | `backend/luaegis/obfuscate.js` |
+| `/api/luaegis/vm` | `api/luaegis/[...path].js` | `backend/luaegis/vm.js` |
+| `/api/luaegis/validate` | `api/luaegis/[...path].js` | `backend/luaegis/validate.js` |
+| `/api/clyde/obfuscate` | `api/clyde/[...path].js` | `backend/clyde/obfuscate.js` |
+| `/api/clyde/validate` | `api/clyde/[...path].js` | `backend/clyde/validate.js` |
+| `/api/veil/obfuscate` | `api/veil/obfuscate.js` | `backend/veil/obfuscate.js` |
+| `/api/lumora/obfuscate` | `api/lumora/obfuscate.js` | `backend/lumora/obfuscate.js` |
+| `/api/wearedev/obfuscate` | `api/wearedev/obfuscate.js` | `backend/wearedev/obfuscate.js` |
+| `/api/25ms-obf/obfuscate` | `api/25ms-obf/obfuscate.js` | `backend/25ms-obf/obfuscate.js` |
+| `/api/hercules/obfuscate` | `api/hercules/obfuscate.js` | `backend/hercules/obfuscate.js` |
+| `/api/moonsecv2/obfuscate` | `api/moonsecv2/obfuscate.js` | `backend/moonsecv2/obfuscate.js` |
+| `/api/voltfuscator/obfuscate` | `api/voltfuscator/obfuscate.js` | `backend/voltfuscator/obfuscate.js` |
+| `/api/xayz/obfuscate` | `api/xayz/obfuscate.js` | `backend/xayz/obfuscate.js` |
+| `/api/luna-moon/obfuscate` | `api/luna-moon/obfuscate.js` | `backend/luna-moon/obfuscate.js` |
+
+`api/luaegis/[...path].js` and `api/clyde/[...path].js` route only their existing subpaths;
+each selected handler retains its existing method, CORS, authentication, validation and response
+logic. The Vercel `functions` configuration keeps the longer timeout and `wasmoon` asset inclusion
+on the same engine entrypoints as before.
+
+The web tester keeps all 12 engine forms mounted while tabs filter the visible group, so switching
+between built-in, experimental and third-party engines does not discard unsent inputs or results.
+The selected group can also be opened directly with `/#tab=built-in`, `/#tab=experimental`, or
+`/#tab=external`.
 
 ## Cài đặt & deploy
 
@@ -166,11 +201,16 @@ thật** (VPS, Render, Fly.io...) rồi để `/api/moonsecv2` proxy sang đó �
 
 ```
 api/
+  health.js                    # function entrypoint cho GET /api/health
+  luaegis/[...path].js         # router dùng chung cho 3 route luaegis
+  clyde/[...path].js           # router dùng chung cho 2 route Clyde
+  <engine>/<route>.js          # entrypoint cho các route còn lại
+backend/
   _lib/auth.js, cors.js        # API key + CORS dùng chung
-  health.js                    # GET, không cần key
-  luaegis/  clyde/  veil/      # engine JS/TS — gọi thẳng lib-dist (đã compile)
-  lumora/   wearedev/          # engine JS thuần / proxy
-  25ms-obf/ hercules/ moonsecv2/  # engine Lua — chạy qua wasmoon
+  health.js                    # handler GET, không cần key
+  luaegis/ clyde/ veil/        # handlers cho engine JS/TS
+  lumora/ wearedev/            # handler JS thuần / proxy
+  25ms-obf/ hercules/ moonsecv2/ # handler engine Lua qua wasmoon
 lib/
   engines/
     luaegis/  clyde/  veil/    # source TS gốc (compile ra lib-dist/ lúc build)
