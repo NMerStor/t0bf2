@@ -27,6 +27,8 @@ từ vài chuỗi text tìm thấy trong file JS minified (`data-placeholder-tex
 Plan Vercel: route này cần khởi động Chromium thật (chậm hơn hẳn các route khác) — đã set
 `maxDuration: 60` + `memory: 1769` trong `vercel.json`, gần như chắc chắn cần **Vercel Pro trở
 lên** (Hobby giới hạn cứng 10s, không đủ cho cold-start Chromium + mở trang + chờ kết quả).
+Các archive Chromium được đóng gói tường minh; trên Vercel, runtime Node 18 dùng thư viện AL2
+còn Node 20 trở lên dùng thư viện AL2023 để Chromium tìm được `libnss3.so`.
 
 Nếu deploy báo lỗi function quá lớn (giới hạn dung lượng gói): đổi `@sparticuz/chromium` thành
 `@sparticuz/chromium-min` trong `package.json` (tải binary Chromium từ xa lúc cold-start thay vì

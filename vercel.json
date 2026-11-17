@@ -16,7 +16,11 @@
       "includeFiles": "node_modules/wasmoon/dist/**"
     },
     "api/wearedev/obfuscate.js": { "maxDuration": 60 },
-    "api/luna-moon/obfuscate.js": { "maxDuration": 60, "memory": 1769 }
+    "api/luna-moon/obfuscate.js": {
+      "maxDuration": 60,
+      "memory": 1769,
+      "includeFiles": "node_modules/@sparticuz/chromium/bin/**"
+    }
   },
   "rewrites": [
     { "source": "/docs", "destination": "/docs.html" }
