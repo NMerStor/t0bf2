@@ -1,6 +1,60 @@
 # t0api — Unified Lua/Luau Obfuscation Gateway
 
-## Bản vá mới nhất
+## Luna Moon đổi hướng: headless-browser automation
+
+Bạn gửi thêm bản mirror đầy đủ site (`public/luna-moon-mirror/`, qua Zipasite). Kiểm tra bundle
+JS thật của bản mirror này thì phát hiện: **site hiện tại không còn obfuscate ở client nữa** —
+nó gọi 1 backend thật (Convex, `compassionate-ant-590.convex.cloud`) để xử lý. Nên route
+`/api/luna-moon/obfuscate` giờ **không reimplement logic**, mà dùng `puppeteer-core` +
+`@sparticuz/chromium` để mở 1 trình duyệt headless thật, điều khiển trang mirror tự host
+(`/luna-moon-mirror/`) y như người dùng thật: gõ code vào ô nhập → bấm nút Obfuscate → đọc kết
+quả từ DOM. Chi tiết đầy đủ: `lib/engines/luna-moon/NOTES.md`.
+
+**Cực kỳ thử nghiệm — cần bạn tự kiểm tra DOM thật:**
+
+Sandbox viết code này không có mạng/trình duyệt để render trang thật, nên các selector trong
+`lib/engines/lunaMoonRunner.js` (ô nhập code, nút "Obfuscate", cách đọc kết quả) là **suy luận**
+từ vài chuỗi text tìm thấy trong file JS minified (`data-placeholder-text`, `"copy"`,
+`"download"`), chưa chắc đúng 100%. Nếu gọi API mà lỗi:
+
+1. Deploy xong, mở `https://<domain>/luna-moon-mirror/` thật trên trình duyệt của bạn.
+2. Mở DevTools → thử gõ code, bấm Obfuscate, xem kết quả hiện ở đâu.
+3. Bấm chuột phải → Inspect vào đúng ô nhập code / nút Obfuscate / vùng kết quả → copy CSS
+   selector thật.
+4. Set vào Vercel env vars: `LUNA_MOON_INPUT_SELECTOR`, `LUNA_MOON_BUTTON_TEXT`,
+   `LUNA_MOON_OUTPUT_SELECTOR` (không cần sửa code, đọc từ env).
+
+Plan Vercel: route này cần khởi động Chromium thật (chậm hơn hẳn các route khác) — đã set
+`maxDuration: 60` + `memory: 1769` trong `vercel.json`, gần như chắc chắn cần **Vercel Pro trở
+lên** (Hobby giới hạn cứng 10s, không đủ cho cold-start Chromium + mở trang + chờ kết quả).
+
+Nếu deploy báo lỗi function quá lớn (giới hạn dung lượng gói): đổi `@sparticuz/chromium` thành
+`@sparticuz/chromium-min` trong `package.json` (tải binary Chromium từ xa lúc cold-start thay vì
+đóng gói sẵn, gói nhỏ hơn nhiều) — xem docs của package đó để chỉnh `executablePath`.
+
+## Thêm 3 engine mới + API_REFERENCE.md
+
+- **`voltfuscator`** (`/api/voltfuscator/obfuscate`) — proxy sang dịch vụ trả phí `voltils.cc`.
+  Cần API key Voltfuscator **của chính bạn** (khác `API_KEY` của gateway này): truyền qua
+  `voltKey` mỗi request hoặc set env `VOLTFUSCATOR_API_KEY`. Quota tính theo plan Voltfuscator
+  (Basic/Pro/Elite), không liên quan quota site này. Docs gốc lưu tại
+  `docs/upstream/Voltfuscator_API_Docs.md`.
+- **`xayz`** (`/api/xayz/obfuscate`) — proxy sang `luaob.vercel.app`, không cần key, ~100
+  req/IP/giờ theo họ. Có gửi kèm `User-Agent` bình thường vì chính docs của họ nói WAF tự chặn
+  User-Agent chứa "bot"/"curl"/"postman" — làm đúng theo hướng dẫn tích hợp chính thức, không tự
+  chế thêm gì. Docs gốc: `docs/upstream/xayz_api_docs.md`.
+- **`luna-moon`** (`/api/luna-moon/obfuscate`) — ❌ **chưa chạy được, luôn trả 501**. Code trích
+  xuất (`luna_moon_obf_package`) là JS minified lấy từ bundle production của
+  `obfuuscator.vercel.app`, chỉ có các mảnh nội bộ (tokenizer/renamer/string encryptor/...) chứ
+  không có hàm orchestrator thật — đã quét hết ~40 hàm top-level, không hàm nào khớp shape
+  options mà chính README gốc của gói mô tả. Xem lý do đầy đủ + hướng làm tiếp ở
+  `lib/engines/luna-moon/NOTES.md`.
+
+**Mới: `API_REFERENCE.md`** — 1 file markdown duy nhất chứa toàn bộ API (15 endpoint), auth,
+body/response, ví dụ curl, bảng tổng hợp trạng thái. Đưa thẳng file này cho bot/AI/dev đọc, không
+cần crawl `/docs` trên web nữa.
+
+## Bản vá trước đó
 
 3. **`25ms-obf` lỗi `prometheus:13: attempt to concatenate a nil value`**: dòng 13 của
    `prometheus.lua` gốc tự dò đường dẫn file của chính nó bằng

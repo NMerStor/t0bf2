@@ -125,6 +125,31 @@ Authorization: Bearer &lt;key&gt;</pre>
       <p class="desc">Vercel Hobby (free): mỗi function tối đa <b>10 giây</b>, không thể tăng. Vercel Pro: mặc định cao hơn, có thể cấu hình <code>maxDuration</code> trong <code>vercel.json</code> (đã set 60s cho các route nặng: <code>luaegis/vm</code>, <code>25ms-obf</code>, <code>hercules</code>, <code>moonsecv2</code>, <code>wearedev</code>). Nếu bạn đang ở plan Hobby và VM nhiều lớp (<code>vmLayers</code> cao) bị timeout 504, giảm <code>vmLayers</code>/dùng preset nhẹ hơn, hoặc nâng lên Pro.</p>
     </div>
 
+    <h3>Proxy sang dịch vụ bên thứ 3</h3>
+
+    <div class="card">
+      <h2>POST /api/voltfuscator/obfuscate <span class="tag proxy" style="margin-left:0">proxy ngoài</span></h2>
+      <p class="desc">Proxy sang voltils.cc. Cần API key Voltfuscator riêng của bạn (khác key của gateway này) — truyền qua <code>voltKey</code> hoặc set env <code>VOLTFUSCATOR_API_KEY</code>. Quota theo plan Voltfuscator (3-120 build/12h tuỳ plan), không liên quan quota của site này.</p>
+      <table><tr><th>Body</th><td><code>code</code>, <code>preset</code> (normal/ultra), <code>runtime</code> (luau/lua51/roblox/studio/executor), <code>voltKey</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/xayz/obfuscate <span class="tag proxy" style="margin-left:0">proxy ngoài</span></h2>
+      <p class="desc">Proxy sang luaob.vercel.app. Không cần key, ~100 req/IP/giờ theo phía họ.</p>
+      <table><tr><th>Body</th><td><code>code</code>, <code>targetMode</code> (roblox/standard)</td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/luna-moon/obfuscate <span class="tag exp" style="margin-left:0">headless browser, cực kỳ thử nghiệm</span></h2>
+      <p class="desc">Site thật đã chuyển sang backend Convex, không còn logic client để trích xuất. Route này mở Chromium headless thật điều khiển bản mirror tự host tại <code>/luna-moon-mirror/</code>. Chưa test thật — xem README.md để tự chỉnh selector qua env var nếu lỗi. Cần Vercel Pro (cold-start Chromium > 10s của Hobby).</p>
+      <table><tr><th>Body</th><td><code>source</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>Xem đầy đủ / dùng cho bot</h2>
+      <p class="desc">Toàn bộ nội dung trang này (và nhiều hơn: ví dụ curl, bảng tổng hợp) đã gộp sẵn vào 1 file <code>API_REFERENCE.md</code> ở gốc repo — đưa thẳng file đó cho bot/AI đọc, không cần crawl trang web này.</p>
+    </div>
+
     <div class="card">
       <h2>Gọi từ bot Discord (ví dụ discord.js)</h2>
       <pre>const res = await fetch("https://&lt;domain&gt;.vercel.app/api/luaegis/obfuscate", {

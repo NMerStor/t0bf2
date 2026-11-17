@@ -15,7 +15,8 @@
       "maxDuration": 60,
       "includeFiles": "node_modules/wasmoon/dist/**"
     },
-    "api/wearedev/obfuscate.js": { "maxDuration": 60 }
+    "api/wearedev/obfuscate.js": { "maxDuration": 60 },
+    "api/luna-moon/obfuscate.js": { "maxDuration": 60, "memory": 1769 }
   },
   "rewrites": [
     { "source": "/docs", "destination": "/docs.html" }

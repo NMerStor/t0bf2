@@ -9,7 +9,9 @@
     "dev": "vercel dev"
   },
   "dependencies": {
-    "wasmoon": "^1.16.0"
+    "wasmoon": "^1.16.0",
+    "@sparticuz/chromium": "^123.0.1",
+    "puppeteer-core": "^22.6.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

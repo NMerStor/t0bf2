@@ -91,6 +91,36 @@ const ENGINES = [
     endpoint: "/api/moonsecv2/obfuscate",
     field: "source",
   },
+  {
+    id: "voltfuscator",
+    name: "Voltfuscator",
+    tag: "proxy",
+    desc: "Proxy sang voltils.cc (dịch vụ trả phí bên ngoài) — cần API key Voltfuscator riêng của bạn, có quota theo plan (xem /docs).",
+    endpoint: "/api/voltfuscator/obfuscate",
+    field: "code",
+    presets: ["normal", "ultra"],
+    extraFields: [
+      { key: "runtime", label: "Runtime", options: ["luau", "lua51", "roblox", "studio", "executor"] },
+    ],
+    textFields: [{ key: "voltKey", label: "Voltfuscator API key (để trống nếu đã set VOLTFUSCATOR_API_KEY trên server)" }],
+  },
+  {
+    id: "xayz",
+    name: "Xayz",
+    tag: "proxy",
+    desc: "Proxy sang luaob.vercel.app (dịch vụ bên ngoài, không cần key, ~100 req/IP/giờ).",
+    endpoint: "/api/xayz/obfuscate",
+    field: "code",
+    extraFields: [{ key: "targetMode", label: "Target mode", options: ["roblox", "standard"] }],
+  },
+  {
+    id: "luna-moon",
+    name: "Luna Moon",
+    tag: "exp",
+    desc: "Không reimplement logic — điều khiển headless browser thật trên bản mirror tự host (/luna-moon-mirror). Rất thử nghiệm, chưa test thật, có thể cần chỉnh selector qua env var sau khi tự kiểm tra DOM.",
+    endpoint: "/api/luna-moon/obfuscate",
+    field: "source",
+  },
 ];
 
 const SAMPLE = `local function greet(name)\n  print("Hello, " .. name)\nend\n\ngreet("world")`;
@@ -113,7 +143,8 @@ function renderKeyBar() {
 }
 
 function renderEngineCard(engine) {
-  const tagHtml = engine.tag ? `<span class="tag ${engine.tag}">${engine.tag === "old" ? "[old]" : "thử nghiệm"}</span>` : "";
+  const tagLabel = { old: "[old]", exp: "thử nghiệm", proxy: "proxy ngoài" }[engine.tag] || engine.tag;
+  const tagHtml = engine.tag ? `<span class="tag ${engine.tag}">${tagLabel}</span>` : "";
   const presetHtml = engine.presets
     ? `<select data-role="preset">${engine.presets.map((p) => `<option value="${p}">${p}</option>`).join("")}</select>`
     : "";
@@ -123,6 +154,12 @@ function renderEngineCard(engine) {
       <select data-role="extra" data-key="${f.key}">
         ${f.options.map((o) => `<option value="${o}">${f.label}: ${o}</option>`).join("")}
       </select>`
+    )
+    .join("");
+
+  const textHtml = (engine.textFields || [])
+    .map(
+      (f) => `<input type="text" data-role="text" data-key="${f.key}" placeholder="${f.label}" />`
     )
     .join("");
 
@@ -148,8 +185,9 @@ function renderEngineCard(engine) {
         ${extraHtml}
       </div>
       ${checkboxHtml ? `<div class="row">${checkboxHtml}</div>` : ""}
+      ${textHtml ? `<div class="row">${textHtml}</div>` : ""}
       <div class="row">
-        <button data-role="run">Obfuscate</button>
+        <button data-role="run">${engine.disabled ? "Obfuscate (sẽ lỗi 501)" : "Obfuscate"}</button>
       </div>
       <div class="out" data-role="out" style="display:none;">
         <div class="meta" data-role="meta"></div>
@@ -191,6 +229,12 @@ async function runEngine(engine, card) {
   } else {
     Object.assign(body, extras);
   }
+
+  // Text fields (e.g. a per-request third-party API key) always go
+  // top-level on the body, never nested under wrapOptionsKey.
+  card.querySelectorAll('[data-role="text"]').forEach((input) => {
+    if (input.value.trim()) body[input.dataset.key] = input.value.trim();
+  });
 
   btn.disabled = true;
   btn.textContent = "Đang xử lý...";

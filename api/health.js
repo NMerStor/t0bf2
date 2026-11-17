@@ -8,6 +8,7 @@ export default function handler(req, res) {
     engines: [
       "luaegis", "clyde", "veil", "lumora",
       "wearedev", "25ms-obf [old]", "hercules", "moonsecv2",
+      "voltfuscator", "xayz", "luna-moon [not implemented]",
     ],
     time: new Date().toISOString(),
   });
