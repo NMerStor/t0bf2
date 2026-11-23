@@ -64,6 +64,7 @@ source gốc vào `lib/engines/<ten>/`, rồi thêm 1 dòng vào `ROUTE_MODULES`
 | `25ms-obf [old]` | `/api/25ms-obf/obfuscate` | Fork Prometheus, chạy qua `wasmoon` | ⚠️ chưa test thật (sandbox không có mạng/Lua) |
 | `hercules` | `/api/hercules/obfuscate` | CLI Lua, chạy qua `wasmoon` | ⚠️ chưa test thật |
 | `moonsecv2` | `/api/moonsecv2/obfuscate` | Bản mô phỏng by larpcorrupt, dùng bytecode | ⚠️⚠️ rủi ro cao (xem bên dưới) |
+| `azurevm` | `/api/azurevm/obfuscate` | Proxy tới service Lua 5.1 riêng | ⚠️ cần deploy service và cấu hình URL/token |
 | `voltfuscator` | `/api/voltfuscator/obfuscate` | Proxy sang voltils.cc (trả phí, cần key riêng) | ✅ proxy |
 | `xayz` | `/api/xayz/obfuscate` | Proxy sang luaob.vercel.app | ✅ proxy |
 | `oxyfuscator` | `/api/oxyfuscator/obfuscate` | TS, polymorphic + VM | ✅ test chạy thật |
@@ -153,6 +154,10 @@ chuẩn và glue code gọi đúng API thật của từng project, nhưng **ch�
 sinh ra nó, `wasmoon` chạy Lua 5.4 còn engine này nhiều khả năng viết cho Lua 5.1. Nếu lỗi/ra
 output hỏng, hướng sửa đúng là host engine này trên 1 server Lua 5.1 thật rồi proxy sang (giống
 `/api/wearedev`), không phải vá `wasmoon`.
+
+`azurevm` cũng đọc bytecode Lua 5.1 nên chạy qua service container riêng, không qua wasmoon.
+Xem [`services/azurevm-lua51/README.md`](./services/azurevm-lua51/README.md) để build/deploy;
+gateway cần `AZUREVM_LUA51_SERVICE_URL` và `AZUREVM_LUA51_SERVICE_TOKEN`.
 
 ## Giao diện
 

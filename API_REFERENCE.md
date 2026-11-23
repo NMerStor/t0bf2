@@ -353,9 +353,10 @@ không chạy được và cần compile lại.
 
 ## 20. POST /api/azurevm/obfuscate
 
-⚠️⚠️ **Rủi ro cao — cùng lớp rủi ro như moonsecv2.** Fork Prometheus, tự mô tả là "Lua 5.1
-VM-based obfuscator", dùng `string.dump()` thật để lấy bytecode rồi tự parse. wasmoon chạy Lua
-5.4 — có thể không tương thích định dạng bytecode Lua 5.1.
+AzureVM cần bytecode Lua 5.1. Route này proxy tới service Lua 5.1 riêng (xem
+[`services/azurevm-lua51/README.md`](./services/azurevm-lua51/README.md)); không dùng
+wasmoon/Lua 5.4 để parse bytecode. Cần cấu hình `AZUREVM_LUA51_SERVICE_URL` và
+`AZUREVM_LUA51_SERVICE_TOKEN` trên gateway.
 
 **Body**: `source`, `preset` (mặc định `Luraph`): `Minify`\|`Weak`\|`Vmify`\|`Medium`\|`Strong`\|`Luraph`\|`Luraph14`\|`Luraph15`\|`AzureGod`\|`AzureGod15`\|`AzureGodUltra`\|`Fast`\|`Balanced`\|`Hardened`\|`Research`, `seed` (number, optional)
 **Response**: `{ success, engine: "azurevm", output, preset }`
