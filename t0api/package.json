@@ -1,0 +1,21 @@
+{
+  "name": "t0api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Unified Lua/Luau obfuscation API gateway (luaegis, clyde, veil, lumora, prometheus, hercules, moonsecv2, wearedev) for Vercel.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "wasmoon": "^1.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

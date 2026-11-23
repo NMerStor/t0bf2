@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>t0api — API Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>t0api — API Docs</h1>
+      <nav>
+        <a href="/">Tester</a>
+        <a href="/docs" class="active">API Docs</a>
+      </nav>
+    </header>
+
+    <div class="card">
+      <h2>Xác thực</h2>
+      <p class="desc">Mọi endpoint (trừ <code>/api/health</code>) yêu cầu API key, gửi qua 1 trong 2 header:</p>
+      <pre>X-API-Key: &lt;key&gt;
+# hoặc
+Authorization: Bearer &lt;key&gt;</pre>
+      <p class="desc">Key được cấu hình bằng biến môi trường <code>API_KEY</code> trong Vercel Project Settings → Environment Variables (xem <code>.env.example</code>). Nếu chưa set, mọi request sẽ bị từ chối (fail-closed), kể cả không có key.</p>
+    </div>
+
+    <div class="card">
+      <h2>GET /api/health</h2>
+      <p class="desc">Không cần API key. Trả danh sách engine đang có.</p>
+      <pre>curl https://&lt;your-domain&gt;.vercel.app/api/health</pre>
+    </div>
+
+    <h3>Engine thuần JS/TS (đã test chạy thật)</h3>
+
+    <div class="card">
+      <h2>POST /api/luaegis/obfuscate</h2>
+      <p class="desc">AST obfuscate: rename, encrypt strings/members, numbers, control-flow, minify, vmWrap.</p>
+      <table>
+        <tr><th>Body</th><td><code>source</code> (string, bắt buộc), <code>preset</code> (light/medium/heavy/maximum), <code>seed</code>, <code>rename</code>, <code>encryptStrings</code>, <code>encryptMembers</code>, <code>numbers</code>, <code>controlFlow</code>, <code>minify</code>, <code>vmWrap</code> (boolean, tất cả optional)</td></tr>
+        <tr><th>Response</th><td><code>{ success, output, mode, seed, localsRenamed, ... }</code></td></tr>
+      </table>
+      <pre>curl -X POST https://&lt;domain&gt;/api/luaegis/obfuscate \
+  -H "Content-Type: application/json" -H "X-API-Key: $KEY" \
+  -d '{"source":"print(1)","preset":"heavy"}'</pre>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/luaegis/vm</h2>
+      <p class="desc">Bytecode VM (stack/register), nhiều lớp + DTC anti-dump probe. Nặng hơn — có thể chạm giới hạn thời gian của Vercel, xem phần "Giới hạn thời gian" bên dưới.</p>
+      <table>
+        <tr><th>Body</th><td><code>source</code>, <code>vmType</code> (none/stack/register), <code>vmLevel</code> (debug/normal/max), <code>vmLayers</code>, <code>padBytes</code>, <code>hookIntegrity</code>, <code>randomDtc</code>, <code>rename</code>, <code>preserveGlobals</code>, <code>encodeStrings</code>, <code>scrambleControlFlow</code>, <code>oneLine</code>, <code>seed</code></td></tr>
+        <tr><th>Response</th><td><code>{ success, output, usedDtcId, seed, ... }</code></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/luaegis/validate</h2>
+      <p class="desc">Kiểm tra cú pháp Lua/Luau trước khi obfuscate.</p>
+      <table><tr><th>Body</th><td><code>source</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/clyde/obfuscate</h2>
+      <p class="desc">Base codebase mà luaegis được phát triển lên từ đó. Hỗ trợ VM mode (stack/register).</p>
+      <table>
+        <tr><th>Body</th><td><code>code</code> (string, bắt buộc), <code>options.noRename</code>, <code>options.noPreserve</code>, <code>options.encodeStrings</code>, <code>options.scramble</code>, <code>options.oneLine</code>, <code>options.vmType</code> (none/stack/register), <code>options.vmLevel</code> (debug/normal/max)</td></tr>
+        <tr><th>Response</th><td><code>{ success, output }</code></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/clyde/validate</h2>
+      <table><tr><th>Body</th><td><code>code</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/veil/obfuscate</h2>
+      <p class="desc">Engine của veil (self-leak bởi null, free to use). Chỉ phần lõi obfuscator được dùng, không kèm app/DB gốc.</p>
+      <table>
+        <tr><th>Body</th><td><code>source</code>, <code>preset</code> (light/medium/heavy/maximum), các cờ boolean giống luaegis</td></tr>
+        <tr><th>Response</th><td><code>{ success, output, mode, seed }</code></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/lumora/obfuscate</h2>
+      <p class="desc">Numerical VM 3 lớp XOR, port 100% sang JS thuần — không phụ thuộc Lua runtime nào, luôn chạy ổn định.</p>
+      <table><tr><th>Body</th><td><code>source</code></td></tr><tr><th>Response</th><td><code>{ success, output, seed:{k1,k2,k3} }</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/wearedev/obfuscate</h2>
+      <p class="desc">Proxy thẳng sang API công khai của wearedevs.net — không phải engine riêng. Lưu ý: dùng API bên thứ 3 ở quy mô lớn (nhiều bot/nhiều request) nên kiểm tra điều khoản sử dụng của wearedevs.net trước.</p>
+      <table><tr><th>Body</th><td><code>script</code></td></tr></table>
+    </div>
+
+    <h3>Engine Lua chạy qua wasmoon — <span class="tag exp" style="margin-left:0">thử nghiệm, chưa test thật</span></h3>
+    <p class="desc">3 engine dưới đây là code Lua gốc được nhúng chạy trong 1 VM Lua 5.4 biên dịch sang WASM (thư viện <code>wasmoon</code>), không cần cài Lua lên server. Vì sandbox lúc viết code này không có mạng và không có Lua, các route này <b>chưa được chạy thử thành công</b> — hãy test kỹ bằng 1 đoạn code nhỏ ngay sau khi deploy trước khi dùng thật cho bot.</p>
+
+    <div class="card">
+      <h2>POST /api/25ms-obf/obfuscate <span class="tag old">[old]</span></h2>
+      <p class="desc">Fork của Prometheus (không phải bản gốc của levno-710).</p>
+      <table>
+        <tr><th>Body</th><td><code>source</code>, <code>preset</code> (ol/Normal/Vmify/Minify/me/Weak/doubled/Medium/Strong, mặc định Minify)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/hercules/obfuscate <span class="tag exp" style="margin-left:0">thử nghiệm</span></h2>
+      <table>
+        <tr><th>Body</th><td><code>source</code>, <code>preset</code> (light/balanced/heavy/maximum, mặc định balanced)</td></tr>
+      </table>
+      <p class="desc">Preset <code>maximum</code> bật virtual_machine/bytecode_encoding — có thể dùng <code>string.dump</code>, nên rủi ro giống moonsecv2 bên dưới nếu test thấy lỗi, thử preset nhẹ hơn trước.</p>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/moonsecv2/obfuscate <span class="tag exp" style="margin-left:0">thử nghiệm — rủi ro cao</span></h2>
+      <table><tr><th>Body</th><td><code>source</code></td></tr></table>
+      <p class="desc"><b>Cảnh báo:</b> engine này dùng <code>string.dump()</code> để lấy bytecode rồi tự parse — bytecode Lua gắn chặt với đúng version sinh ra nó. wasmoon chạy Lua 5.4, trong khi parser.lua nhiều khả năng được viết cho bytecode Lua 5.1. Nếu route này lỗi hoặc ra output hỏng, hướng xử lý đúng là host engine này trên 1 server Lua 5.1 thật (VPS/Render) rồi proxy sang, giống cách <code>/api/wearedev</code> đang làm — không phải sửa wasmoon.</p>
+    </div>
+
+    <div class="card">
+      <h2>Số lượng function & giới hạn thời gian chạy (Vercel)</h2>
+      <p class="desc">Toàn bộ API (21 route) gộp vào đúng <b>1 function động</b> <code>api/[engine]/[action].js</code> (Node, 17 route Lua/JS/C++) + <code>api/health.js</code> + <code>api/ig67/obfuscate.py</code> (Python riêng, 1 route) = <b>3 function</b> cho cả deployment (Hobby giới hạn tối đa 12). <code>vercel.json</code> set <code>maxDuration: 300</code> cho function động — nhưng mức 300s chỉ thật sự áp dụng nếu <b>Fluid Compute</b> được bật trong Project Settings; nếu tắt, Hobby quay về giới hạn cứng 10s. Dù đặt 300s, Vercel không đảm bảo engine nào cũng xong trong thời gian đó — route nặng (<code>luaegis/vm</code> nhiều layer, <code>25ms-obf</code>/<code>hercules</code>/<code>moonsecv2</code> qua wasmoon) vẫn nên giảm tham số nếu bị timeout.</p>
+    </div>
+
+    <h3>Proxy sang dịch vụ bên thứ 3</h3>
+
+    <div class="card">
+      <h2>POST /api/voltfuscator/obfuscate <span class="tag proxy" style="margin-left:0">proxy ngoài</span></h2>
+      <p class="desc">Proxy sang voltils.cc. Cần API key Voltfuscator riêng của bạn (khác key của gateway này) — truyền qua <code>voltKey</code> hoặc set env <code>VOLTFUSCATOR_API_KEY</code>. Quota theo plan Voltfuscator (3-120 build/12h tuỳ plan), không liên quan quota của site này.</p>
+      <table><tr><th>Body</th><td><code>code</code>, <code>preset</code> (normal/ultra), <code>runtime</code> (luau/lua51/roblox/studio/executor), <code>voltKey</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/xayz/obfuscate <span class="tag proxy" style="margin-left:0">proxy ngoài</span></h2>
+      <p class="desc">Proxy sang luaob.vercel.app. Không cần key, ~100 req/IP/giờ theo phía họ.</p>
+      <table><tr><th>Body</th><td><code>code</code>, <code>targetMode</code> (roblox/standard)</td></tr></table>
+    </div>
+
+    <h3>Engine mới (thuần JS/TS/CommonJS — đã test chạy thật)</h3>
+
+    <div class="card">
+      <h2>POST /api/oxyfuscator/obfuscate</h2>
+      <p class="desc">TypeScript, polymorphic builds + 2 lớp VM độc lập ở preset maximum.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>preset</code> (minimum/balanced/maximum/swear), <code>seed</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/moonsecv3/obfuscate <span class="tag old" style="margin-left:0">reconstruction</span></h2>
+      <p class="desc">Bản tái dựng định dạng bytecode/VM quan sát được của MoonSec V3 — ghi rõ "This is not the original source code". CommonJS thuần, không phụ thuộc native nào.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>seed</code>, <code>watermark</code> (boolean)</td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/eatfuscator/obfuscate</h2>
+      <p class="desc">Register bytecode riêng + VM interpreter + envelope anti-tamper. <b>Giấy phép AGPL-3.0</b> — source gốc giữ nguyên tại <code>lib/engines/eatfuscator/</code> và <code>docs/upstream/eatfuscator-LICENSE.txt</code> để đáp ứng điều khoản network-use.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>seed</code>, <code>minify</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/nova/obfuscate</h2>
+      <p class="desc">Level weak/medium/harder/strong/premium. Bản gốc gắn cứng 1 key bị leak để chặn level "premium" — route này KHÔNG dùng key đó; "premium" chạy bình thường như các level khác trừ khi bạn tự set <code>NOVA_PREMIUM_KEY</code>.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>level</code>, <code>novaKey</code> (chỉ cần nếu đã set <code>NOVA_PREMIUM_KEY</code>)</td></tr></table>
+    </div>
+
+    <h3>Engine mới nhất (đợt 2 — tất cả đã tích hợp, không còn "deferred")</h3>
+
+    <div class="card">
+      <h2>POST /api/exfuscator/obfuscate</h2>
+      <p class="desc">Binary C++ thật — không phải wasmoon/Node. Source gốc có bug case-sensitivity (include <code>"astra/..."</code> nhưng thư mục thật tên <code>ExFuscator</code>) + thiếu CMake trong sandbox build — đã tự biên dịch thẳng bằng <code>g++ -static</code> (bỏ qua CMake), verify chạy thật trước khi đóng gói. Binary tĩnh (static), không phụ thuộc thư viện ngoài.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>preset</code> (light/medium/maximum), <code>seed</code>, các cờ <code>noStrings</code>/<code>noNumbers</code>/<code>noRename</code>/<code>noDeadcode</code>/<code>noFlatten</code>/<code>noProxies</code>/<code>noOpaque</code>/<code>noDfm</code>/<code>renameGlobals</code>/<code>globalsReal</code> (boolean)</td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/azurevm/obfuscate <span class="tag exp" style="margin-left:0">rủi ro bytecode</span></h2>
+      <p class="desc">Fork Prometheus, tự nhận là "Lua 5.1 VM-based". Dùng <code>string.dump</code> thật — cùng lớp rủi ro version-mismatch dưới wasmoon (Lua 5.4) như moonsecv2.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>preset</code> (Luraph mặc định; Minify/Weak/Vmify/Medium/Strong/Luraph14/Luraph15/AzureGod/AzureGod15/AzureGodUltra/Fast/Balanced/Hardened/Research), <code>seed</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/catph/obfuscate <span class="tag exp" style="margin-left:0">thử nghiệm</span></h2>
+      <p class="desc">Preset <code>luaubc</code> cần binary <code>luau-compile</code> chính thức của Roblox (không bundle) — route tự chặn preset này với lỗi 400 rõ ràng thay vì để lỗi mơ hồ từ sâu trong pipeline. Dùng <code>customvm</code>/<code>ironbrew2</code>/<code>catph</code>.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>preset</code> (customvm mặc định/ironbrew2/catph)</td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/claudium/obfuscate</h2>
+      <p class="desc">100% Lua thuần — bản demo server gốc dùng Python chỉ để gọi <code>lua5.4</code> làm CLI, không phải phụ thuộc Python thật của logic obfuscate.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>preset</code> (lua51 mặc định/minimum/maximum/lua53/luajit/roblox/luau/executor)</td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>POST /api/ig67/obfuscate <span class="tag proxy" style="margin-left:0">Python function riêng</span></h2>
+      <p class="desc">Python thuần (chỉ thư viện chuẩn), chạy trên Vercel Python runtime riêng — <code>api/ig67/obfuscate.py</code> (function #3 của dự án, không ảnh hưởng giới hạn 12 function). Đã test thật bằng HTTP server thật trong lúc viết code.</p>
+      <table><tr><th>Body</th><td><code>source</code>, <code>seed</code> (mặc định 0x7C01), <code>minKb</code>, <code>name</code>, <code>version</code></td></tr></table>
+    </div>
+
+    <div class="card">
+      <h2>Xem đầy đủ / dùng cho bot</h2>
+      <p class="desc">Toàn bộ nội dung trang này (và nhiều hơn: ví dụ curl, bảng tổng hợp) đã gộp sẵn vào 1 file <code>API_REFERENCE.md</code> ở gốc repo — đưa thẳng file đó cho bot/AI đọc, không cần crawl trang web này.</p>
+    </div>
+
+    <div class="card">
+      <h2>Gọi từ bot Discord (ví dụ discord.js)</h2>
+      <pre>const res = await fetch("https://&lt;domain&gt;.vercel.app/api/luaegis/obfuscate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": process.env.T0API_KEY,
+  },
+  body: JSON.stringify({ source: code, preset: "heavy" }),
+});
+const data = await res.json();
+if (!data.success) {
+  // data.error / data.detail
+} else {
+  // data.output
+}</pre>
+    </div>
+
+    <footer>t0api · deploy trên tài khoản Vercel của bạn</footer>
+  </div>
+</body>
+</html>

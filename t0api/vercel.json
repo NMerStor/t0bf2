@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "functions": {
+    "api/[engine]/[action].js": {
+      "maxDuration": 300,
+      "memory": 1769,
+      "includeFiles": "{node_modules/wasmoon/dist/**,lib/engines/exfuscator/bin/**}"
+    },
+    "api/ig67/obfuscate.py": {
+      "maxDuration": 300
+    }
+  },
+  "rewrites": [
+    { "source": "/docs", "destination": "/docs.html" }
+  ]
+}

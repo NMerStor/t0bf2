@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>t0api — Lua/Luau Obfuscation Gateway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>t0api</h1>
+      <nav>
+        <a href="/" class="active">Tester</a>
+        <a href="/docs">API Docs</a>
+      </nav>
+    </header>
+
+    <div id="key-bar" class="key-bar"></div>
+
+    <p class="desc" style="color:var(--muted); margin-top:-8px;">
+      18 engine thật (20 ô test, luaegis có thêm chế độ VM riêng), mỗi engine 1 endpoint riêng (không gộp chung). Nhập code mẫu, chọn preset, bấm Obfuscate để test ngay trong trình duyệt — hoặc gọi thẳng qua API cho bot Discord (xem <a href="/docs" style="color:var(--accent)">API Docs</a>).
+    </p>
+
+    <div id="engines"></div>
+
+    <footer>t0api · tự host trên Vercel của bạn · không có dữ liệu nào rời khỏi server của bạn ngoài engine WeAreDevs (proxy)</footer>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

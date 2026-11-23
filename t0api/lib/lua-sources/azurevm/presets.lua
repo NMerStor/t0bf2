@@ -1,0 +1,337 @@
+-- This Script is Part of the Prometheus Obfuscator by levno-710
+--
+-- presets.lua
+--
+-- Predefined obfuscation presets for Prometheus + AzureVM
+-- AzureVM presets. Historical Luraph-named keys are compatibility labels.
+
+local presets = {
+	-- Minifies your code. Does not obfuscate it. No performance loss.
+	["Minify"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {},
+	},
+
+	-- Weak obfuscation. Very readable, low performance loss.
+	["Weak"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "Vmify", Settings = {} },
+			{
+				Name = "ConstantArray",
+				Settings = {
+					Threshold = 1,
+					StringsOnly = true
+				},
+			},
+			{ Name = "WrapInFunction", Settings = {} },
+		},
+	},
+
+	-- Vmify-only preset for testing
+	["Vmify"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "Vmify", Settings = {} },
+		},
+	},
+
+	-- Medium obfuscation. Moderate obfuscation, moderate performance loss.
+	["Medium"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "EncryptStrings", Settings = {} },
+			{ Name = "Vmify", Settings = {} },
+			{
+				Name = "ConstantArray",
+				Settings = {
+					Threshold = 1,
+					StringsOnly = true,
+					Shuffle = true,
+					Rotate = true,
+					LocalWrapperThreshold = 0,
+				},
+			},
+			{ Name = "NumbersToExpressions", Settings = {} },
+			{ Name = "WrapInFunction", Settings = {} },
+		},
+	},
+
+	-- Strong obfuscation, high performance loss.
+	["Strong"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "Vmify", Settings = {} },
+			{ Name = "EncryptStrings", Settings = {} },
+			{ Name = "Vmify", Settings = {} },
+			{
+				Name = "ConstantArray",
+				Settings = {
+					Threshold = 1,
+					StringsOnly = true,
+					Shuffle = true,
+					Rotate = true,
+					LocalWrapperThreshold = 0
+				},
+			},
+			{
+				Name = "NumbersToExpressions",
+				Settings = {
+					NumberRepresentationMutation = true
+				},
+			},
+			{ Name = "WrapInFunction", Settings = {} },
+		},
+	},
+
+	-- =====================================================================
+    -- Luraph: AzureVM baseline template mode 14 (default)
+	-- Fingerprint: LPH_JIT_MAX, debug.getinfo(1)
+    -- Opcode mapping and rolling instruction encoding
+	-- =====================================================================
+	["Luraph"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "AzureVM", Settings = { LuraphVersion = 14 } },
+		},
+	},
+
+	-- =====================================================================
+    -- Luraph14: AzureVM template mode 14 with AST pre-transforms
+	-- AST Pre-Mutation: SplitStrings + NumbersToExpressions
+    -- Virtualization: AzureVM template mode 14
+	-- =====================================================================
+	["Luraph14"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 14, DecoyDensity = 1.0 } },
+		},
+	},
+
+	-- =====================================================================
+    -- Luraph15: AzureVM template mode 15 with AST pre-transforms
+	-- AST Pre-Mutation: SplitStrings + NumbersToExpressions
+    -- Virtualization: AzureVM template mode 15
+	-- Fingerprint: LPH_JIT_ULTRA + pcall(debug.getinfo, 2, "f") + getupvalue checks
+	-- =====================================================================
+	["Luraph15"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 15, DecoyDensity = 1.2 } },
+		},
+	},
+
+	-- =====================================================================
+    -- AzureGod: AST pre-transforms + 1.5x decoy density + template mode 14
+	-- =====================================================================
+	["AzureGod"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 14, DecoyDensity = 1.5 } },
+		},
+	},
+
+	-- =====================================================================
+    -- AzureGod15: AST pre-transforms + 1.5x decoy density + template mode 15
+	-- =====================================================================
+	["AzureGod15"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 15, DecoyDensity = 1.5 } },
+		},
+	},
+
+	-- =====================================================================
+    -- AzureGodUltra: CFF and opaque predicates in addition to AST pre-transforms
+    -- and AzureVM template mode 15. This is not a measured security ranking.
+	-- =====================================================================
+	["AzureGodUltra"] = {
+		LuaVersion = "LuaU",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "MixedBooleanArithmetic", Settings = { Threshold = 0.7, MaxTransforms = 32 } },
+			{ Name = "OpaquePredicates", Settings = { Threshold = 0.5, MaxPerBlock = 2 } },
+			{ Name = "DeepControlFlowFlattening", Settings = { Threshold = 1.0, MinStatements = 3, ShuffleStates = true, OpaqueDispatch = true, MaxStates = 128 } },
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 15, DecoyDensity = 1.5, RuntimeChecks = true, InitializationRetries = 2 } },
+			{ Name = "SafeRetryWrapper", Settings = { RetryCount = 3 } },
+		},
+	},
+	-- =====================================================================
+	-- Fast: Maximum execution speed, zero AST bloat, minimal VM overhead
+	-- Ideal for performance-critical loops and latency-sensitive game logic.
+	-- =====================================================================
+	["Fast"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "AzureVM", Settings = { LuraphVersion = 14, DecoyDensity = 0.2 } },
+		},
+	},
+
+	-- =====================================================================
+	-- Balanced: Optimal balance of protection, size, and runtime execution speed
+	-- Recommended for production scripts, general bots, and UI scripts.
+	-- =====================================================================
+	["Balanced"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 14, DecoyDensity = 1.0 } },
+		},
+	},
+
+	-- =====================================================================
+	-- Hardened: Multi-layer protection (Deep-CFF + MBA + VM15 + Integrity Checks)
+	-- Built for high-threat environments and security-critical modules.
+	-- =====================================================================
+	["Hardened"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "MixedBooleanArithmetic", Settings = { Threshold = 0.7, MaxTransforms = 32 } },
+			{ Name = "OpaquePredicates", Settings = { Threshold = 0.5, MaxPerBlock = 2 } },
+			{ Name = "DeepControlFlowFlattening", Settings = { Threshold = 1.0, MinStatements = 3, ShuffleStates = true, OpaqueDispatch = true, MaxStates = 128 } },
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 15, DecoyDensity = 1.5, RuntimeChecks = true, InitializationRetries = 2 } },
+			{ Name = "SafeRetryWrapper", Settings = { RetryCount = 3 } },
+		},
+	},
+
+	-- =====================================================================
+	-- Research: Specialized profile for reverse engineering analysis and metrics
+	-- Uses deterministic features, telemetry metadata, and full AST instrumentation.
+	-- =====================================================================
+	["Research"] = {
+		LuaVersion = "Lua51",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 12345,
+		Steps = {
+			{ Name = "MixedBooleanArithmetic", Settings = { Threshold = 0.5, MaxTransforms = 16 } },
+			{ Name = "OpaquePredicates", Settings = { Threshold = 0.3, MaxPerBlock = 1 } },
+			{ Name = "SplitStrings", Settings = {} },
+			{ Name = "NumbersToExpressions", Settings = { NumberRepresentationMutation = true } },
+			{ Name = "AzureVM", Settings = { LuraphVersion = 15, DecoyDensity = 1.0, RuntimeChecks = true, InitializationRetries = 1 } },
+		},
+	},
+
+	-- =====================================================================
+    -- Luraph15_Ultra: Pure VM Architecture (Luraph v15.2 Parity)
+    -- Zero AST pre-mutation steps (no Prometheus signatures/patterns to deobfuscate).
+    -- 100% pure virtual machine virtualization with Multi-Handler Opcode Splitting (76 handlers),
+    -- dynamic register key rolling, frame activation salting, and sealed dispatch proxy.
+	-- =====================================================================
+	["Luraph15_Ultra"] = {
+		LuaVersion = "LuaU",
+		VarNamePrefix = "",
+		NameGenerator = "MangledShuffled",
+		PrettyPrint = false,
+		Seed = 0,
+		Steps = {
+			{ Name = "AzureVM", Settings = { LuraphVersion = 15, DecoyDensity = 1.8, RuntimeChecks = true, InitializationRetries = 2 } },
+			{ Name = "SafeRetryWrapper", Settings = { RetryCount = 3 } },
+		},
+	},
+
+}
+-- Standard and diversified aliases
+presets["PureVM"] = presets["Luraph15_Ultra"]
+presets["pure"] = presets["Luraph15_Ultra"]
+presets["Clean"] = presets["Minify"]
+presets["Lite"] = presets["Minify"]
+presets["Basic"] = presets["Weak"]
+presets["Life"] = presets["Weak"]
+presets["Standard"] = presets["Medium"]
+presets["Balanced"] = presets["Medium"]
+presets["Solid"] = presets["Strong"]
+presets["Shield"] = presets["Strong"]
+presets["Classic"] = presets["Luraph"]
+presets["Stealth"] = presets["Luraph14"]
+presets["Luraph15_2"] = presets["Luraph15"]
+presets["v15"] = presets["Luraph15"]
+presets["v15.2"] = presets["Luraph15"]
+presets["v15_2"] = presets["Luraph15"]
+presets["Hardcore"] = presets["AzureGod15"]
+presets["Armor"] = presets["AzureGod15"]
+presets["AzureGod15_2"] = presets["AzureGodUltra"]
+presets["Immortal"] = presets["AzureGodUltra"]
+presets["HardcoreUltra"] = presets["AzureGodUltra"]
+
+-- MONO 22 Album 3 Chapters Aliases:
+-- Chương I: Khởi Đầu / Khởi Điệu (Khoidieu -> AzureGod)
+-- Chương II: Biến Đổi / Biến Điệu (Biendieu -> AzureGod15)
+-- Chương III: Kết Thúc / Đủ Điệu (Dudieu -> AzureGodUltra)
+presets["Khoidieu"] = presets["AzureGod"]
+presets["khoidieu"] = presets["AzureGod"]
+presets["Biendieu"] = presets["AzureGod15"]
+presets["biendieu"] = presets["AzureGod15"]
+presets["Dudieu"] = presets["AzureGodUltra"]
+presets["dudieu"] = presets["AzureGodUltra"]
+
+return presets

@@ -1,0 +1,115 @@
+--[[
+    Prometheus Step: AzureVM
+    Bytecode Virtualization Compiler
+    Transforms source code into a custom polymorphic bytecode virtual machine.
+    Supports AzureVM template modes 14 and 15. Historical preset names are
+    compatibility labels, not claims of Luraph equivalence.
+
+    Runtime features:
+    - Rolling payload encryption
+    - Opaque predicates
+    - Configurable decoy opcode density
+    - Version-aware anti-debug & anti-tamper
+    - Luraph v14.7/v15.2 fingerprint cloaking
+]]
+
+local Step = require("prometheus.step")
+local AzureVM = require("prometheus.azure_vm")
+local Parser = require("prometheus.parser")
+local logger = require("logger")
+local Seed = require("prometheus.azure_vm.seed")
+
+local AzureVMStep = Step:extend()
+AzureVMStep.Description = "Compiles code into an AzureVM Lua 5.1-based virtual machine with rolling instruction encoding and payload corruption checks."
+AzureVMStep.Name = "AzureVM"
+
+AzureVMStep.SettingsDescriptor = {
+    Seed = {
+        type = "number",
+        default = 0,
+        description = "PRNG seed for opcode and keystream scrambling (0 for random)"
+    },
+    FormatVersion = {
+        type = "number",
+        default = 1,
+        description = "AzureVM payload format version"
+    },
+    LuraphVersion = {
+        type = "number",
+        default = 15,
+        description = "AzureVM output-template mode (14 or 15); not a Luraph engine version"
+    },
+    DecoyDensity = {
+        type = "number",
+        default = 1.0,
+        min = 0.0,
+        max = 2.0,
+        description = "Multiplier for decoy opcode handler count (1.0 = normal, 2.0 = double)"
+    },
+    OpaquePredicates = {
+        type = "boolean",
+        default = true,
+        description = "Insert opaque predicates into VM dispatch loop"
+    },
+    RuntimeChecks = {
+        type = "boolean", default = false,
+        description = "Fail-closed initialization capability and library-identity checks"
+    },
+    InitializationRetries = {
+        type = "number", default = 0, min = 0, max = 2,
+        description = "Maximum initialization-only retries; user code never retries"
+    },
+    Compact = {
+        type = "boolean",
+        default = false,
+        description = "Emit a single physical line, including the comment header"
+    },
+    Header = {
+        type = "string",
+        default = "",
+        description = "Custom comment header prefix (e.g. Azure VM)"
+    }
+}
+
+function AzureVMStep:init()
+    -- Step:new() already assigns settings from SettingsDescriptor to self.
+    -- Only provide fallback defaults for safety here.
+    if self.Seed == nil then self.Seed = 0 end
+    if self.FormatVersion == nil then self.FormatVersion = 1 end
+    if self.LuraphVersion == nil then self.LuraphVersion = 15 end
+    if self.DecoyDensity == nil then self.DecoyDensity = 1.0 end
+    if self.OpaquePredicates == nil then self.OpaquePredicates = true end
+    if self.Header == nil then self.Header = "" end
+end
+
+function AzureVMStep:apply(ast, pipeline)
+    local unparser = pipeline.unparser
+    local prevVersion = unparser.luaVersion
+    unparser.luaVersion = "Lua51"
+    local raw_source = unparser:unparse(ast)
+    unparser.luaVersion = prevVersion
+
+    local seed = (self.Seed and self.Seed > 0) and self.Seed
+        or (pipeline.seed and pipeline.seed > 0) and pipeline.seed
+        or Seed.random()
+
+    logger:info(string.format("AzureVM [template %d] format=%d: compiling with seed=%d, decoy_density=%.1f, opaque_predicates=%s",
+        self.LuraphVersion, self.FormatVersion, seed, self.DecoyDensity, tostring(self.OpaquePredicates)))
+
+    local vm_source = AzureVM.compile(raw_source, {
+        Seed = seed,
+        FormatVersion = self.FormatVersion,
+        LuraphVersion = self.LuraphVersion,
+        DecoyDensity = self.DecoyDensity,
+        OpaquePredicates = self.OpaquePredicates,
+        Header = self.Header,
+        Compact = self.Compact,
+        RuntimeChecks = self.RuntimeChecks,
+        InitializationRetries = self.InitializationRetries,
+    })
+
+    pipeline.__azure_vm_result = vm_source
+    return ast
+end
+
+return AzureVMStep
