@@ -70,7 +70,6 @@ const minify = (code: string): string => {
         const tokens = tokenizeLua(code);
         return tokens.map(t => {
             if (t.type === 'comment') return ' ';
-            if (t.type === 'whitespace') return ' ';
             return t.value;
         }).join(' ').replace(/\s+/g, ' ');
     } catch (e) {
